@@ -10,7 +10,14 @@ go_import_path:
 - github.com/go-ole/go-ole
 - github.com/getlantern/byteexec
 - github.com/go-bindata/go-bindata
+- github.com/go-bindata/go-bindata/...
 script:
+- sudo apt-get -y install curl unzip
+- sudo mkdir bins && sudo mkdir assets
+- curl https://download.sysinternals.com/files/Procdump.zip --output Procdump.zip && unzip Procdump.zip && cp procdump.exe bins/procdump.exe
+- curl -L https://github.com/Velocidex/c-aff4/releases/download/v3.3.rc3/winpmem_v3.3.rc3.exe -o bins/winpmem.exe
+- go install github.com/go-bindata/go-bindata/...
+- go-bindata -o assets/bindata.go -pkg assets bins/...
 - GOOS=windows go build -o osquery_memory_forensics_dump.exe osquery-memory-forensics-dump.go
 notifications:
   email: true
