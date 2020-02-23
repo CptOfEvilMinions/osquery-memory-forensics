@@ -1,0 +1,25 @@
+dist: bionic
+lagnuage: go
+go:
+- 1.13.x
+git:
+  depth: 1
+go_import_path:
+- github.com/kolide/osquery-go
+- github.com/StackExchange/wmi
+- github.com/go-ole/go-ole
+- github.com/getlantern/byteexec
+- github.com/go-bindata/go-bindata
+script:
+- GOOS=windows go build -o osquery_memory_forensics_dump.exe osquery-memory-forensics-dump.go
+notifications:
+  email: true
+deploy:
+  provider: releases
+  api_key:
+    secure: Lez0hL7C0bjhqoRhrWodrgBhyeDlnV7/14tk7aoLdSeeuFM6cE2TwwZHzQumnkTC+1wCvK5GtBvKEum8T5mjQiEt4sHo82EKZ6uG7zfD46jcrOLozFpIbPu6hi5vpr9nYb9kESvC71Nb3YJSCxKrT22mE9mSVZXpEI7fFZECBPEz0KKk7O3of0SP355gP75jK1yz3xRNHEPrfLPQx+OdjXfqIyj04EJSbZURE+whQy8204XhZjib2wYL6eNxcirP3W0bv2tqmsr43SJeuAmKB9wNFXxjYz7EirlLQ3hf0HkjfkYyWoTcOKdsL2yoJ4uthVWOiCBH6zkPBjqwhNqlmzCbt6WWbNKKDyoGuY2HwVkU50JbX5kGhY/Eh/tpg2LNCXV+KJlxKeQ9Cbnaszj2h4Ep/X6yApFcgYXIBxylr1trjxbLoIY3CDfPPGI2GvARawTnhg+NNM3+EnLC1vKJeWuejil11QA2oKcGQB+JHLoQywHOKbnU+ECoiTFbgCqk+5vzMiG1b1M4OR9HdxfPSLMlAYzRoK0FMZ6fQ+vght7oKS1FdFZFif4u0PkrU3BfSGjXgYiBryhIUCRlhLkFkUusJU/KGD9bQ0+PjptMi0RGnqYaZz5zUFnCT+eLIUp0CTFef2qdBS2CdwRREx/ylfIF8Wg+sviylA9sV7mWtFE=
+  file: osquery_memory_forensics_dump.exe
+  on:
+    repo: CptOfEvilMinions/osquery-memory-forensics
+    tags: false
+  edge: true

@@ -22,13 +22,15 @@ import (
 )
 
 // Global variables for executable pointers
-var winPmemExecutable *byteexec.Exec
-var procDumpExecutable *byteexec.Exec
-var foresincDataDirectory = "C:\\forensics\\data"
-var winAppDataDirPath = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH") + "\\AppData\\Roaming"
+var winPmemExecutable *byteexec.Exec                                                          // Location of WinPmem binary
+var procDumpExecutable *byteexec.Exec                                                         // Location of ProcDump binary
+var foresincDataDirectory = "C:\\forensics\\data"                                             // Default location to store forensic data
+var winAppDataDirPath = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH") + "\\AppData\\Roaming" // Location of binaries on disk
 
-var winPmemExecutableFileHash string
-var procDumpExecutableFileHash string
+var winPmemExecutableFileHash string  //
+var procDumpExecutableFileHash string //
+
+var verification = 1 // This enforces the verification check of memory dump tools on disk
 
 // main input: Takes in user input where the Osquery socket is located
 // This function registers this Osquery extension using the user provided socket path
@@ -97,17 +99,14 @@ func MemoryDumpColumns() []table.ColumnDefinition {
 // MemoryDumpGenerate input: ctx and query context
 // MemoryDumpGenerate output: Returns a map which contains all the values passed into
 func MemoryDumpGenerate(ctx context.Context, queryContext table.QueryContext) ([]map[string]string, error) {
-	var verification = 1
 	var pid = -1
-	var name string
 	var statusBool bool
 	var status error
 	var fullMemoryDump int
+	var name string
 
 	// Extract values
-	if len(queryContext.Constraints["name"].Constraints) == 1 {
-		name = queryContext.Constraints["name"].Constraints[0].Expression
-	} else if len(queryContext.Constraints["output_path"].Constraints) == 1 {
+	if len(queryContext.Constraints["output_path"].Constraints) == 1 {
 		foresincDataDirectory = queryContext.Constraints["output_path"].Constraints[0].Expression
 	} else if len(queryContext.Constraints["pid"].Constraints) == 1 {
 		pid, status = strconv.Atoi(queryContext.Constraints["pid"].Constraints[0].Expression)
@@ -120,12 +119,9 @@ func MemoryDumpGenerate(ctx context.Context, queryContext table.QueryContext) ([
 		statusBool = false
 	}
 
-	// Verify Binary
-	statusBool, status = verifyBinaries()
-
+	// Perform memory dump
 	if status == nil {
-		// Perform the proper memory dump based on type
-		statusBool, name, status = MemoryDump(foresincDataDirectory, name, pid)
+		statusBool, name, status = MemoryDump(foresincDataDirectory, pid)
 	}
 
 	// Set status to sucess if no error was passed up
@@ -133,6 +129,7 @@ func MemoryDumpGenerate(ctx context.Context, queryContext table.QueryContext) ([
 		status = errors.New("sucess")
 	}
 
+	// Return result of memory dump
 	return []map[string]string{
 		{
 			"name":             name,
@@ -147,7 +144,9 @@ func MemoryDumpGenerate(ctx context.Context, queryContext table.QueryContext) ([
 
 }
 
-// createForensicsDirectory
+// createForensicsDirectory input: Path to direcctory to save forensic data
+// If directory exists it skips, else create it.
+// createForensicsDirectory output: Return boolean reult and on failure return error
 func createForensicsDirectory(directoryPath string) (bool, error) {
 	var err error
 
@@ -165,12 +164,22 @@ func createForensicsDirectory(directoryPath string) (bool, error) {
 	return false, err
 }
 
-// MemoryDump input:
-// MemoryDump output:
-func MemoryDump(foresincDataDirectory string, name string, pid int) (bool, string, error) {
+// MemoryDump input: foresincDataDirectory, pid
+// If PID is provided it will proceed with a memory dump of that process, else will
+// default to a full memory dump
+// MemoryDump output: Returns result, name of new dump (if sucessful), and status
+func MemoryDump(foresincDataDirectory string, pid int) (bool, string, error) {
 	var memoryDumpFilePath string
 	var memoryDumpFileName string
 	var memoryDumpErr error
+
+	//Verify Binary
+	if verification == 1 {
+		statusBool, status := verifyBinaries()
+		if statusBool == false && status != nil {
+			return false, "", status
+		}
+	}
 
 	// Perform memory dump with winpmem
 	// -1 is full memory dump
@@ -181,7 +190,7 @@ func MemoryDump(foresincDataDirectory string, name string, pid int) (bool, strin
 		cmd := procDumpExecutable.Command("/accepteula", "-ma", strconv.Itoa(pid), memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
 	} else {
-		memoryDumpFileName = "proc_dump_" + strconv.Itoa(pid) + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".dmp"
+		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".dmp"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
 		cmd := winPmemExecutable.Command("-o", memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
@@ -208,7 +217,10 @@ func MemoryDump(foresincDataDirectory string, name string, pid int) (bool, strin
 	return false, "", memoryDumpErr
 }
 
-// DumpExecutablesToDisk
+// DumpExecutablesToDisk input: None
+// Extracts executables from go-bindata module and writes them to
+// disk located at `%APPDATA%\\byteexec\\*.exe`
+// DumpExecutablesToDisk output: Returns result and error (if any)
 func DumpExecutablesToDisk() (bool, error) {
 	// Extract ProdDump executable byte array
 	procDumpByteData, err := assets.Asset("bins/procdump.exe")
@@ -217,15 +229,9 @@ func DumpExecutablesToDisk() (bool, error) {
 	}
 
 	// Write executable to disk
-	procDumpExecutable, err = byteexec.New(procDumpByteData, "procdump.exe")
+	procDumpExecutable, err = byteexec.New(procDumpByteData, "procdump")
 	if err != nil {
 		return false, err
-	}
-
-	// Verify Binary
-	status, err := verifyBinaries()
-	if err != nil {
-		return status, err
 	}
 
 	// Extract WinPmem executable byte array
@@ -235,9 +241,17 @@ func DumpExecutablesToDisk() (bool, error) {
 	}
 
 	// Write executable to disk
-	winPmemExecutable, err = byteexec.New(WinPmemData, "winpmem.exe")
+	winPmemExecutable, err = byteexec.New(WinPmemData, "winpmem")
 	if err != nil {
 		return false, err
+	}
+
+	// Verify Binary
+	if verification == 1 {
+		status, err := verifyBinaries()
+		if err != nil {
+			return status, err
+		}
 	}
 
 	// Return pointers to executablse
@@ -245,7 +259,8 @@ func DumpExecutablesToDisk() (bool, error) {
 
 }
 
-// calculateSHA256File input: file path
+// calculateSHA256File input: programFilePath which is the file path
+// a file that needs a SHA256 hash calculated
 // calculateSHA256File output: calculated SHA256 file hash
 // If the function fails it will return false and the error
 func calculateSHA256File(programFilePath string) (string, error) {
@@ -266,7 +281,9 @@ func calculateSHA256File(programFilePath string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-// Verify SHA256 hash of binaries
+// verifyBinaries input: None
+// Verify SHA256 hash of binaries and data in go-bindata module
+// verifyBinaries outout: Returns result and error (if any)
 func verifyBinaries() (bool, error) {
 	var err error
 
@@ -281,12 +298,12 @@ func verifyBinaries() (bool, error) {
 	fmt.Println(procDumpByteDataFileHash)
 
 	// Calculate hash of bianry on disk
-	procDumpExecutable, err := ioutil.ReadFile(winAppDataDirPath + "\\" + "byteexec\\procdump.exe.exe")
+	procDumpExecutable, err := ioutil.ReadFile(winAppDataDirPath + "\\" + "byteexec\\procdump.exe")
 	h1 := sha256.Sum256(procDumpExecutable)
 	procDumpExecutableFileHash := hex.EncodeToString(h1[:])
 	fmt.Println(procDumpExecutableFileHash)
 
-	///////////////////////////////// winpmem.exe /////////////////////////////////
+	///////////////////////////////// Hash verification for winpmem.exe /////////////////////////////////
 	// Calculate hash of byte array
 	winPmemByteData, err := assets.Asset("bins/winpmem.exe")
 	if err != nil {
@@ -297,7 +314,7 @@ func verifyBinaries() (bool, error) {
 	fmt.Println(winPmemByteDataFileHash)
 
 	// Calculate hash of bianry on disk
-	absFilePath, err := filepath.Abs(winAppDataDirPath + "\\" + "byteexec\\winpmem.exe.exe")
+	absFilePath, err := filepath.Abs(winAppDataDirPath + "\\" + "byteexec\\winpmem.exe")
 	if err != nil {
 		return false, err
 	}
