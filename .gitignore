@@ -1,0 +1,3 @@
+bins/*
+osquery_memory_forensics_dump.*
+assets/bindata.go
