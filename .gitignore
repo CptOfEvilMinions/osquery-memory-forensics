@@ -1,3 +1,6 @@
 bins/*
 osquery_memory_forensics_dump.*
+assets/windows/*
+assets/darwin/*
+assets/linux/*
 assets/bindata.go
