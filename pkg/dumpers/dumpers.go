@@ -26,7 +26,7 @@ func CreateForensicsDirectory(directoryPath string) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		return true, errors.New("sucess")
+		return true, nil
 	}
 	return false, err
 }
@@ -57,9 +57,9 @@ func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppD
 		cmd := procDumpExecutable.Command("/accepteula", "-ma", strconv.Itoa(pid), memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
 	} else {
-		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".dmp"
+		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".raw"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
-		cmd := winPmemExecutable.Command("-o", memoryDumpFilePath)
+		cmd := winPmemExecutable.Command("-o", memoryDumpFilePath, "--format", "raw")
 		memoryDumpErr = cmd.Run()
 	}
 

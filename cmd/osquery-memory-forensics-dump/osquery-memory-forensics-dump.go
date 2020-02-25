@@ -39,8 +39,8 @@ func main() {
 	fmt.Println(winAppDataDirPath)
 
 	// Extract executables on disk
-	statusBool, err = exes.DumpExecutablesToDisk(winPmemExecutable, procDumpExecutable, verification, winAppDataDirPath)
-	if err != nil && statusBool == false {
+	statusBool, procDumpExecutable, winPmemExecutable, err = exes.DumpExecutablesToDisk(verification, winAppDataDirPath)
+	if err != nil {
 		log.Fatalf("Could not extract executables to disk: %w\n", err)
 	}
 

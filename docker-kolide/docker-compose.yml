@@ -1,14 +1,29 @@
 version: '2.2'
 services: 
-  #nginx:
+  nginx:
+    build: 
+      context: .
+      dockerfile: Dockerfile-nginx
+    container_name: kolide-nginx
+    restart: unless-stopped
+    ports: 
+      - 8000:80
+      - 8443:443
+    networks: 
+      - default
+      - kolide-backend
+    depends_on: 
+      - kolide
+
   kolide:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile-kolide
     container_name: kolide-webgui
     restart: unless-stopped
     ports: 
       - 8080:8080
     networks: 
-      - default
       - kolide-backend
     depends_on:
       - mysql

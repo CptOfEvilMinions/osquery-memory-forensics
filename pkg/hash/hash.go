@@ -3,7 +3,6 @@ package hash
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -78,7 +77,7 @@ func VerifyBinaries(winAppDataDirPath string) (bool, error) {
 	fmt.Println(winPmemExecutableFileHash)
 
 	if (procDumpByteDataFileHash == procDumpExecutableFileHash) && (winPmemByteDataFileHash == winPmemExecutableFileHash) {
-		return true, errors.New("sucess")
+		return true, nil
 	}
 
 	return false, err

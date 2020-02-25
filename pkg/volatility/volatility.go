@@ -21,8 +21,8 @@ func volatilityImageInfo(memoryDumpFilePath string) (bool, string, error) {
 // volatilityCommands input:
 //
 // volatilityCommands output:
-func volatilityCommands(memoryDumpFilePath string, volatilityCommandLineArgs string) (bool, string, error) {
-	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, volatilityCommandLineArgs, "--output=json")
+func volatilityCommands(memoryDumpFilePath string, volatilityProfile string, volatilityCommandLineArgs string) (bool, string, error) {
+	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, "--profile", volatilityProfile, volatilityCommandLineArgs, "--output=json")
 	cmdOutput, err = cmd.CombinedOutput()
 
 	if err != nil {
@@ -32,8 +32,8 @@ func volatilityCommands(memoryDumpFilePath string, volatilityCommandLineArgs str
 }
 
 
-func volatilityPsList(memoryDumpFilePath string) (bool, string, error) {
-	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, "pslsit", "--output=json")
+func volatilityPsList(memoryDumpFilePath string, volatilityProfile string) (bool, string, error) {
+	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, "--profile", volatilityProfile, "pslsit", "--output=json")
 	cmdOutput, err = cmd.CombinedOutput()
 
 	if err != nil {
