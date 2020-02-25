@@ -1,0 +1,42 @@
+version: '2.2'
+services: 
+  #nginx:
+  kolide:
+    build: .
+    container_name: kolide-webgui
+    restart: unless-stopped
+    ports: 
+      - 8080:8080
+    networks: 
+      - default
+      - kolide-backend
+    depends_on:
+      - mysql
+      - redis
+
+  mysql:
+    image: mysql:5.7
+    container_name: kolide-mysql
+    restart: unless-stopped
+    environment: 
+      MYSQL_ROOT_PASSWORD: kolide
+      MYSQL_DATABASE: kolide
+      MYSQL_USER: kolide
+      MYSQL_PASSWORD: kolide
+    volumes: 
+      - kolide-db:/var/lib/mysql
+    networks: 
+      - kolide-backend
+
+  redis:
+    image: redis:latest
+    container_name: kolide-redis
+    restart: unless-stopped
+    networks: 
+      - kolide-backend
+
+volumes:
+  kolide-db:
+
+networks:
+  kolide-backend:

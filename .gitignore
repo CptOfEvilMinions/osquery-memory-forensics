@@ -4,3 +4,4 @@ assets/windows/*
 assets/darwin/*
 assets/linux/*
 assets/bindata.go
+.DS_Store

@@ -52,12 +52,12 @@ func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppD
 	// -1 is full memory dump
 	// Anything not -1 is process dump
 	if pid != -1 {
-		memoryDumpFileName = "proc_dump_" + strconv.Itoa(pid) + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".dmp"
+		memoryDumpFileName = "proc_dump_" + strconv.Itoa(pid) + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".dmp"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
 		cmd := procDumpExecutable.Command("/accepteula", "-ma", strconv.Itoa(pid), memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
 	} else {
-		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".dmp"
+		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".dmp"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
 		cmd := winPmemExecutable.Command("-o", memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
