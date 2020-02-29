@@ -19,12 +19,12 @@ import (
 )
 
 // Global variables for executable pointers
-var winPmemExecutable *byteexec.Exec                                                          // Location of WinPmem binary
+var dumpItExecutable *byteexec.Exec                                                           // Location of Dumpit binary
 var procDumpExecutable *byteexec.Exec                                                         // Location of ProcDump binary
 var foresincDataDirectory = "C:\\forensics\\data"                                             // Default location to store forensic data
 var winAppDataDirPath = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH") + "\\AppData\\Roaming" // Location of binaries on disk
 
-var winPmemExecutableFileHash string  //
+var dumpItExecutableFileHash string   //
 var procDumpExecutableFileHash string //
 
 var verification = 1 // This enforces the verification check of memory dump tools on disk
@@ -39,9 +39,13 @@ func main() {
 	fmt.Println(winAppDataDirPath)
 
 	// Extract executables on disk
-	statusBool, procDumpExecutable, winPmemExecutable, err = exes.DumpExecutablesToDisk(verification, winAppDataDirPath)
+	statusBool, dumpItExecutable, err = exes.DumpExecutableToDisk(verification, winAppDataDirPath, "dumpit", "dump")
 	if err != nil {
-		log.Fatalf("Could not extract executables to disk: %w\n", err)
+		log.Fatalf("Could not extract executable DumpIt to disk: %w\n", err)
+	}
+	statusBool, procDumpExecutable, err = exes.DumpExecutableToDisk(verification, winAppDataDirPath, "procdump", "dump")
+	if err != nil {
+		log.Fatalf("Could not extract executable Procdump to disk: %w\n", err)
 	}
 
 	// Make sure forensic folder exists
@@ -118,7 +122,7 @@ func MemoryDumpGenerate(ctx context.Context, queryContext table.QueryContext) ([
 
 	// Perform memory dump
 	if status == nil {
-		statusBool, name, status = dumpers.MemoryDump(foresincDataDirectory, pid, verification, winAppDataDirPath, winPmemExecutable, procDumpExecutable)
+		statusBool, name, status = dumpers.MemoryDump(foresincDataDirectory, pid, verification, winAppDataDirPath, dumpItExecutable, procDumpExecutable)
 	}
 
 	// Set status to sucess if no error was passed up

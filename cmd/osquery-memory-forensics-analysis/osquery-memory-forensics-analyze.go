@@ -5,16 +5,23 @@ import (
 	"errors"
 	"flag"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/exes"
+	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/volatility"
+
 	"github.com/getlantern/byteexec"
 	"github.com/kolide/osquery-go"
 	"github.com/kolide/osquery-go/plugin/table"
 )
 
-var volatilityExecutable *byteexec.Exec
+var volatilityExecutable *byteexec.Exec                                                       // Location of Volatility binary
+var foresincDataDirectory = "C:\\forensics\\data"                                             // Default location to store forensic data
+var winAppDataDirPath = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH") + "\\AppData\\Roaming" // Location of binaries on disk
+
+var verification = 1 // This enforces the verification check of memory dump tools on disk
 
 // main input: Takes in user input where the Osquery socket is located
 // This function registers this Osquery extension using the user provided socket path
@@ -24,9 +31,9 @@ func main() {
 	var err error
 
 	//Extract executables on disk
-	statusBool, err = exes.DumpExecutablesToDisk()
-	if err != nil && statusBool == false {
-		log.Fatalf("Could not extract executables to disk: %w\n", err)
+	statusBool, volatilityExecutable, err = exes.DumpExecutableToDisk(verification, winAppDataDirPath, "volatility", "analyze")
+	if err != nil || statusBool == false {
+		log.Fatalf("Could not extract executable Procdump to disk: %w\n", err)
 	}
 
 	// Extract command line arguments
@@ -63,7 +70,9 @@ func main() {
 func MemoryAnalyzeColumns() []table.ColumnDefinition {
 	return []table.ColumnDefinition{
 		table.TextColumn("file_path"),
+		table.TextColumn("result"),
 		table.TextColumn("plugin"),
+		table.TextColumn("output_render"),
 		table.TextColumn("status"),
 		table.TextColumn("status_bool"),
 		table.IntegerColumn("verification"),
@@ -72,28 +81,37 @@ func MemoryAnalyzeColumns() []table.ColumnDefinition {
 
 // MemoryAnalyzeGenerate input: ctx and query context
 // MemoryAnalyzeGenerate output: Returns a map which contains all the values passed into
+// and the results of Volatility
 func MemoryAnalyzeGenerate(ctx context.Context, queryContext table.QueryContext) ([]map[string]string, error) {
 	var memoryDumpFilepath string
 	var volatilityPlugin string
+	var outputRender = "pretty"
+	var result string
 	var statusBool bool
 	var status error
-	var verification true
+	var err error
 
 	// Extract values
+	if len(queryContext.Constraints["plugin"].Constraints) == 1 {
+		volatilityPlugin = queryContext.Constraints["plugin"].Constraints[0].Expression
+	}
+	if len(queryContext.Constraints["output_render"].Constraints) == 1 {
+		outputRender = queryContext.Constraints["output_render"].Constraints[0].Expression
+	}
+	if len(queryContext.Constraints["verification"].Constraints) == 1 {
+		verification, status = strconv.Atoi(queryContext.Constraints["verification"].Constraints[0].Expression)
+	}
 	if len(queryContext.Constraints["file_path"].Constraints) == 1 {
 		memoryDumpFilepath = queryContext.Constraints["file_path"].Constraints[0].Expression
-	} else if len(queryContext.Constraints["plugin"].Constraints) == 1 {
-		volatilityPlugin = queryContext.Constraints["plugin"].Constraints[0].Expression
-	} else if len(queryContext.Constraints["verification"].Constraints) == 1 {
-		volatilityPlugin = queryContext.Constraints["verification"].Constraints[0].Expression
 	} else {
 		status = errors.New("Please specify a PID or set full_memory_dump=1")
 		statusBool = false
 	}
 
 	// Analysis with Volatility
-	if status == nil {
-		statusBool, result, err = MemoryDump(foresincDataDirectory, pid)
+	statusBool, result, status = volatility.RunPlugin(volatilityExecutable, memoryDumpFilepath, volatilityPlugin, outputRender)
+	if err != nil {
+		status = err
 	}
 
 	// Set status to sucess if no error was passed up
@@ -104,11 +122,13 @@ func MemoryAnalyzeGenerate(ctx context.Context, queryContext table.QueryContext)
 	// Return result of memory dump
 	return []map[string]string{
 		{
-			"file_path":    memoryDumpFilepath,
-			"plugin":       volatilityPlugin,
-			"status":       status.Error(),
-			"status_bool":  strconv.FormatBool(statusBool),
-			"verification": strconv.Itoa(verification),
+			"file_path":     memoryDumpFilepath,
+			"result":        result,
+			"plugin":        volatilityPlugin,
+			"output_render": outputRender,
+			"status":        status.Error(),
+			"status_bool":   strconv.FormatBool(statusBool),
+			"verification":  strconv.Itoa(verification),
 		},
 	}, nil
 

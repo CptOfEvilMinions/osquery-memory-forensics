@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/exes"
 	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/hash"
 	"github.com/getlantern/byteexec"
 )
@@ -35,20 +36,20 @@ func CreateForensicsDirectory(directoryPath string) (bool, error) {
 // If PID is provided it will proceed with a memory dump of that process, else will
 // default to a full memory dump
 // MemoryDump output: Returns result, name of new dump (if sucessful), and status
-func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppDataDirPath string, winPmemExecutable *byteexec.Exec, procDumpExecutable *byteexec.Exec) (bool, string, error) {
+func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppDataDirPath string, dumpItExecutable *byteexec.Exec, procDumpExecutable *byteexec.Exec) (bool, string, error) {
 	var memoryDumpFilePath string
 	var memoryDumpFileName string
 	var memoryDumpErr error
 
 	//Verify Binary
 	if verification == 1 {
-		statusBool, status := hash.VerifyBinaries(winAppDataDirPath)
+		statusBool, status := exes.VerifyBinaries(winAppDataDirPath, "dump")
 		if statusBool == false && status != nil {
 			return false, "", status
 		}
 	}
 
-	// Perform memory dump with winpmem
+	// Perform memory dump with DumpIt
 	// -1 is full memory dump
 	// Anything not -1 is process dump
 	if pid != -1 {
@@ -57,15 +58,15 @@ func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppD
 		cmd := procDumpExecutable.Command("/accepteula", "-ma", strconv.Itoa(pid), memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
 	} else {
-		memoryDumpFileName = "winpmem" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".raw"
+		memoryDumpFileName = "dumpit" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".raw"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
-		cmd := winPmemExecutable.Command("-o", memoryDumpFilePath, "--format", "raw")
+		cmd := dumpItExecutable.Command("-o", memoryDumpFilePath, "--format", "raw")
 		memoryDumpErr = cmd.Run()
 	}
 
 	// Return error of dump
 	// No idea why this error code is returned but it seems to work fine
-	if memoryDumpErr != nil && memoryDumpErr.Error() != "exit status 4294967294" {
+	if memoryDumpErr != nil && memoryDumpErr.Error() != "exit status 4294967294" && memoryDumpErr.Error() != "exit status 1" {
 		return false, "", memoryDumpErr
 	}
 

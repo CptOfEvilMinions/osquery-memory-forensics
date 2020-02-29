@@ -1,43 +1,21 @@
 package volatility
 
 import (
-	
+	"fmt"
+
+	"github.com/getlantern/byteexec"
 )
 
-// volatilityImageInfo input:
-//
-// volatilityImageInfo output:
-func volatilityImageInfo(memoryDumpFilePath string) (bool, string, error) {
-	cmd := volatilityExecutable.Command("-f", memoryDumpFilePath, "imageinfo", "--output=json")
-	cmdOutput, err = cmd.CombinedOutput()
-
+// RunPlugin input: This function takes in a pointer to the executable, a file path to the memory dump,
+// name of a Volatility plugin, and the name of an output render
+// RunPlugin output: Returns the result of the Volatility plugin
+func RunPlugin(volatilityExecutable *byteexec.Exec, memoryDumpFilePath string, volatilityPlugin string, outputRender string) (bool, string, error) {
+	cmd := volatilityExecutable.Command("-f", memoryDumpFilePath, "-r", outputRender, volatilityPlugin)
+	cmdOutput, err := cmd.Output()
 	if err != nil {
-		return false, "", volatilityErr
+		fmt.Println(err.Error())
+		return false, "", err
 	}
-	return true, cmdOutput, nil
-
-}
-
-// volatilityCommands input:
-//
-// volatilityCommands output:
-func volatilityCommands(memoryDumpFilePath string, volatilityProfile string, volatilityCommandLineArgs string) (bool, string, error) {
-	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, "--profile", volatilityProfile, volatilityCommandLineArgs, "--output=json")
-	cmdOutput, err = cmd.CombinedOutput()
-
-	if err != nil {
-		return false, "", volatilityErr
-	}
-	return true, cmdOutput, nil
-}
-
-
-func volatilityPsList(memoryDumpFilePath string, volatilityProfile string) (bool, string, error) {
-	cmd: = volatilityExecutable.Command("-f", memoryDumpFilePath, "--profile", volatilityProfile, "pslsit", "--output=json")
-	cmdOutput, err = cmd.CombinedOutput()
-
-	if err != nil {
-		return false, "", volatilityErr
-	}
-	return true, cmdOutput, nil
+	//fmt.Println(string(cmdOutput))
+	return true, string(cmdOutput), nil
 }
