@@ -1,5 +1,9 @@
 # Osquery-memory-forensics
 
+<p align="center">
+  <img width="460" height="300" src=".img/memory_gopher.png">
+</p>
+
 For several years I have always wanted to write an Osquery extension to perform memory dumps and analysis. I never got the time to do a deep into my idea but since I have been creating some Osquery-go extensions lately I decided to take a whack at my idea. This blog post will provide a high overview of the architecture of this Osquery extension, how to generate memory dumps with Osquery, and how to remotely analyze these memory dumps with Osquery. Follow me another threat detection engineering experience with osquery-go.
 
 * [Dumping and analyzing memory with Osquery and Kolide](https://holdmybeersecurity.com/2020/03/01/dumping-and-anal…query-and-kolide/)
@@ -12,7 +16,7 @@ For several years I have always wanted to write an Osquery extension to perform 
 ### Download bins and make
 1. Download [ProcDump](https://docs.microsoft.com/en-us/sysinternals/downloads/procdump)
 1. Download [DumpIt](https://blog.comae.io/your-favorite-memory-toolkit-is-back-f97072d33d5c)
-1. Copy binaries do `bins/dump` as `procdump.exe` and `dumpit.exe`
+1. Copy binaries to `bins/dump` as `procdump.exe` and `dumpit.exe`
 
 ### Make go-bindata
 1. `go get -u github.com/go-bindata/go-bindata/...`
