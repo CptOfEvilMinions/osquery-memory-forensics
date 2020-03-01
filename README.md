@@ -1,5 +1,9 @@
 # Osquery-memory-forensics
 
+For several years I have always wanted to write an Osquery extension to perform memory dumps and analysis. I never got the time to do a deep into my idea but since I have been creating some Osquery-go extensions lately I decided to take a whack at my idea. This blog post will provide a high overview of the architecture of this Osquery extension, how to generate memory dumps with Osquery, and how to remotely analyze these memory dumps with Osquery. Follow me another threat detection engineering experience with osquery-go.
+
+* [Dumping and analyzing memory with Osquery and Kolide](https://holdmybeersecurity.com/2020/03/01/dumping-and-anal…query-and-kolide/)
+
 ## Setup dev env
 1. `go mod init github.com/CptOfEvilMinions/osquery-memory-forensics`
 1. `go get`
@@ -31,7 +35,6 @@
 
 ### Compile
 1. `GOOS=windows go build -o osquery_memory_forensic_analyze.exe cmd/osquery-memory-forensics-analysis/osquery-memory-forensics-analyze.go`
-
 
 ## Using a different memory dumper (osquery_memory_forensics_dump)
 1. Modify `pkg/dumpers/dumpers.go`
@@ -66,7 +69,3 @@
 * [DockerHub - NGINX](https://hub.docker.com/_/nginx?tab=tags)
 * [Powershell Set-Content](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/set-content?view=powershell-7)
 * [WinPmem](https://github.com/Velocidex/c-aff4/releases/download/v3.3.rc3/winpmem_v3.3.rc3.exe)
-* []()
-* []()
-* []()
-* []()
