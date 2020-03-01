@@ -10,11 +10,12 @@ import (
 	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/exes"
 	"github.com/CptOfEvilMinions/osquery-memory-forensics/pkg/hash"
 	"github.com/getlantern/byteexec"
+	ps "github.com/mitchellh/go-ps"
 )
 
-// createForensicsDirectory input: Path to direcctory to save forensic data
+// CreateForensicsDirectory input: Path to direcctory to save forensic data
 // If directory exists it skips, else create it.
-// createForensicsDirectory output: Return boolean reult and on failure return error
+// CreateForensicsDirectory output: Return boolean reult and on failure return error
 func CreateForensicsDirectory(directoryPath string) (bool, error) {
 	var err error
 
@@ -23,7 +24,7 @@ func CreateForensicsDirectory(directoryPath string) (bool, error) {
 
 	// If directory doesn't exist, create it
 	if os.IsNotExist(err) {
-		err = os.Mkdir(directoryPath, 0600)
+		err = os.MkdirAll(directoryPath, 0600)
 		if err != nil {
 			return false, err
 		}
@@ -53,14 +54,36 @@ func MemoryDump(foresincDataDirectory string, pid int, verification int, winAppD
 	// -1 is full memory dump
 	// Anything not -1 is process dump
 	if pid != -1 {
-		memoryDumpFileName = "proc_dump_" + strconv.Itoa(pid) + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".dmp"
+		// Get process name by PID
+		var procName = ""
+		p, err := ps.FindProcess(pid)
+		if err == nil {
+			procName = p.Executable()
+		}
+
+		// Create filepath
+		memoryDumpFileName = "proc_dump_" + strconv.Itoa(pid) + "_" + procName + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".dmp"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
+
+		// /accepteula - accept the EULA license agreement
+		// -ma - Write a dump file with all process memory. The default dump format only includes thread and handle information.
 		cmd := procDumpExecutable.Command("/accepteula", "-ma", strconv.Itoa(pid), memoryDumpFilePath)
 		memoryDumpErr = cmd.Run()
 	} else {
-		memoryDumpFileName = "dumpit" + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".raw"
+		// Get hostname
+		var hostname = ""
+		h, err := os.Hostname()
+		if err == nil {
+			hostname = h
+		}
+
+		memoryDumpFileName = "dumpit" + "_" + hostname + "_" + strconv.FormatInt(time.Now().UTC().Unix(), 10) + ".bin"
 		memoryDumpFilePath = foresincDataDirectory + "\\" + memoryDumpFileName
-		cmd := dumpItExecutable.Command("-o", memoryDumpFilePath, "--format", "raw")
+
+		// /O - Output path
+		// /T - Type of memory dump - set to RAW
+		// /Q - Quiet don't prompt user
+		cmd := dumpItExecutable.Command("/O", memoryDumpFilePath, "/T", "raw", "/Q")
 		memoryDumpErr = cmd.Run()
 	}
 

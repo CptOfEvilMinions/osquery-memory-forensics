@@ -17,7 +17,7 @@
 1. `ls -lh assets/dump/bindata.go`
 
 ### Compile
-1. `GOOS=windows go build -o osquery_memory_forensics_dump.exe cmd/osquery-memory-forensics-dump/osquery-memory-forensics-dump.go`
+1. `GOOS=windows go build -o osquery_memory_forensic_dump.exe cmd/dump/osquery-memory-forensics-dump.go`
 
 ## Compile osquery_analyze table
 ### Download bins
@@ -34,7 +34,7 @@
 
 
 ## Using a different memory dumper (osquery_memory_forensics_dump)
-1. Modify `
+1. Modify `pkg/dumpers/dumpers.go`
 
 ## Using a different memory analysis framework (osquery_memory_forensic_analyze)
 1. Copy new binary to `bins/analyze`

@@ -11,5 +11,6 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/kolide/osquery-go v0.0.0-20190904034940-a74aa860032d
 	github.com/markbates/pkger v0.14.0 // indirect
+	github.com/mitchellh/go-ps v1.0.0
 	github.com/shirou/gopsutil v2.20.1+incompatible
 )
