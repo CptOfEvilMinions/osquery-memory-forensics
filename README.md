@@ -6,7 +6,7 @@
 
 For several years I have always wanted to write an Osquery extension to perform memory dumps and analysis. I never got the time to do a deep into my idea but since I have been creating some Osquery-go extensions lately I decided to take a whack at my idea. This blog post will provide a high overview of the architecture of this Osquery extension, how to generate memory dumps with Osquery, and how to remotely analyze these memory dumps with Osquery. Follow me another threat detection engineering experience with osquery-go.
 
-* [Dumping and analyzing memory with Osquery and Kolide](https://holdmybeersecurity.com/2020/03/01/dumping-and-anal…query-and-kolide/)
+* [Dumping and analyzing memory with Osquery and Kolide](https://holdmybeersecurity.com/2020/03/04/adventures-of-the-sherlock-holmes-memory-gopher-dumping-and-analyzing-memory-with-osquery-and-kolide/)
 
 ## Setup dev env
 1. `go mod init github.com/CptOfEvilMinions/osquery-memory-forensics`
